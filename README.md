@@ -20,7 +20,6 @@ Managing user interactions and events (button clicks, form submissions).
 Creating, displaying, and updating the interactive result cards.
 Implementing advanced features like the production flow animation, secure deletion, and data import/export.
 Saving and retrieving data from the browser's Local Storage to ensure data persistence.
-
 External Libraries:
 XLSX.js (SheetJS): A powerful library used to handle the "Import Styles" and "Generate Report" features, allowing users to parse data from Excel files and export calculated data back into a professionally formatted spreadsheet.
 jsPDF & html2canvas: These libraries work together to enable the "Download as PDF" functionality for the detailed calculation steps, converting a section of the webpage into a clean, shareable PDF document.
