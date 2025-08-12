@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Style Wise Plan Calculator - B4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 900px;
+        }
+        .form-input-container {
+            position: relative;
+        }
+        .form-input, .form-select {
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        .form-input:focus, .form-select:focus {
+            border-color: #4285F4;
+            box-shadow: 0 0 0 0.2rem rgba(66, 133, 244, 0.25);
+            outline: none;
+        }
+        .clear-input-btn {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .clear-input-btn:hover {
+            color: #374151;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-primary { background-color: #4285F4; color: white; }
+        .btn-primary:hover:not(:disabled) { background-color: #3367D6; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-secondary:hover:not(:disabled) { background-color: #5a6268; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-danger:hover:not(:disabled) { background-color: #c82333; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-weight: 500; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        
+        .result-card-header {
+            padding: 0.75rem 1.5rem; cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center; font-weight: 600;
+            color: #1a73e8; background-color: #e9f0ff;
+        }
+        .result-card-header:hover { background-color: #dbe7ff; }
+        .result-card-content { display: none; padding: 1.5rem; border-top: 1px solid #e0e0e0; }
+        .result-card-content.active { display: block; }
+        .toggle-icon { transition: transform 0.3s ease; }
+        .toggle-icon.rotated { transform: rotate(180deg); }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); display: flex;
+            justify-content: center; align-items: center; z-index: 1000;
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            background-color: #ffffff; padding: 2rem; border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); width: 90%;
+            max-width: 600px; transform: scale(0.95); transition: transform 0.3s ease;
+        }
+        .modal-overlay:not(.hidden) .modal-content { transform: scale(1); }
+        .modal-input {
+            border: 1px solid #ced4da; border-radius: 8px; padding: 0.75rem 1rem;
+            font-size: 1rem; width: 100%; margin-top: 1rem;
+        }
+        .modal-error { color: #dc3545; font-size: 0.875rem; margin-top: 0.5rem; min-height: 1.25rem; }
+
+        .selection-mode .result-card-header { background-color: #fff3cd; color: #856404; }
+        .selection-mode .result-card-header:hover { background-color: #ffeeba; }
+        .checkbox-container { display: none; }
+        .selection-mode .checkbox-container { display: block; }
+
+        .report-modal-content { max-width: 800px; text-align: left; max-height: 85vh; overflow-y: auto; }
+        .report-summary-item { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px dashed #e9ecef; }
+        .report-section-title { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #343a40; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; }
+
+        .manage-actions-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem; text-align: center;
+        }
+        .action-card {
+            background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px;
+            padding: 1.5rem 1rem; cursor: pointer; transition: all 0.2s ease;
+        }
+        .action-card:hover {
+            transform: translateY(-5px); box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-color: #4285F4;
+        }
+        .action-card i { font-size: 2rem; margin-bottom: 0.75rem; color: #4285F4; }
+        .action-card.danger i { color: #dc3545; }
+        .action-card.danger:hover { border-color: #dc3545; }
+        .action-card p { font-weight: 600; color: #343a40; }
+        .action-card.disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; border-color: #e9ecef; }
+        .action-card.disabled i { color: #6c757d; }
+
+        .header-logo { max-height: 50px; width: auto; }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .detail-section { background-color: #f8f9fa; padding: 1rem; border-radius: 8px; }
+        .detail-section h4 { font-weight: 700; color: #343a40; margin-bottom: 0.75rem; }
+        .detail-item { display: flex; justify-content: space-between; font-size: 0.875rem; padding: 0.25rem 0; }
+        .detail-item span:first-child { color: #495057; }
+        .detail-item span:last-child { font-weight: 600; color: #212529; }
+        
+        #calculationDetailsContent h4 { font-size: 1.1rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem;}
+        #calculationDetailsContent p { font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; margin-bottom: 0.25rem; }
+
+        /* Racetrack Animation */
+        .racetrack-modal .modal-content { max-width: 800px; }
+        .racetrack { position: relative; width: 100%; height: 50px; background-color: #e9ecef; border-radius: 25px; margin-bottom: 1rem; overflow: hidden; }
+        .racetrack-cursor {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(145deg, #ffffff, #e6e6e6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            color: #333;
+        }
+        .racetrack-progress {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #a8d08d, #5a9bd5);
+            transform: translateX(-100%);
+        }
+
+        @media (max-width: 768px) {
+            .result-card-header { flex-wrap: wrap; gap: 0.5rem; }
+        }
+    </style>
+</head>
+<body class="flex justify-center items-start min-h-screen p-4 sm:p-8">
+
+    <div class="container p-6 sm:p-10">
+        <div class="flex flex-col items-center mb-8">
+            <img src="./CLogo.png" alt="Company Logo" class="header-logo mb-4">
+            <h1 class="text-2xl sm:text-3xl font-bold text-center">Style Wise Plan Calculator</h1>
+            <p class="text-center text-gray-600 text-sm sm:text-base">B4 - Sector 63, Noida</p>
+        </div>
+
+        <div id="messages" class="hidden"></div>
+
+        <form id="costForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Form fields with individual clear buttons -->
+                <div class="form-group">
+                    <label for="style_no" class="block text-sm mb-1 font-medium text-gray-700">Style Number:</label>
+                    <div class="form-input-container">
+                        <input type="text" id="style_no" class="form-input w-full pr-8" required>
+                        <span class="clear-input-btn hidden"><i class="fas fa-times-circle"></i></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="process_selected_values" class="block text-sm mb-1 font-medium text-gray-700">Process:</label>
+                    <div class="form-input-container">
+                        <select id="process_selected_values" class="form-select w-full bg-white pr-8">
+                            <option value="N/A">None</option>
+                            <option value="Embroidery">Embroidery</option>
+                            <option value="Washing">Washing</option>
+                            <option value="Adda Work">Adda Work</option>
+                            <option value="Printing">Printing</option>
+                            <option value="Embroidery + Washing">Embroidery + Washing</option>
+                            <option value="All">All Processes</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="order_qty" class="block text-sm mb-1 font-medium text-gray-700">Order Quantity:</label>
+                    <div class="form-input-container">
+                        <input type="number" id="order_qty" class="form-input w-full pr-8" min="0" required placeholder="e.g., 1500">
+                        <span class="clear-input-btn hidden"><i class="fas fa-times-circle"></i></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sam_stitching" class="block text-sm mb-1 font-medium text-gray-700">Stitching SAM:</label>
+                    <div class="form-input-container">
+                        <input type="number" id="sam_stitching" class="form-input w-full pr-8" step="0.01" min="0" required placeholder="e.g., 25.5">
+                        <span class="clear-input-btn hidden"><i class="fas fa-times-circle"></i></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sam_cutting" class="block text-sm mb-1 font-medium text-gray-700">Cutting SAM:</label>
+                    <div class="form-input-container">
+                        <input type="number" id="sam_cutting" class="form-input w-full pr-8" step="0.01" min="0" required placeholder="e.g., 2.5">
+                        <span class="clear-input-btn hidden"><i class="fas fa-times-circle"></i></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sam_finishing" class="block text-sm mb-1 font-medium text-gray-700">Finishing SAM:</label>
+                    <div class="form-input-container">
+                        <input type="number" id="sam_finishing" class="form-input w-full pr-8" step="0.01" min="0" required placeholder="e.g., 3.0">
+                        <span class="clear-input-btn hidden"><i class="fas fa-times-circle"></i></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center mt-8 space-x-4">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-calculator"></i>Calculate</button>
+                <button type="button" id="clearInputBtn" class="btn btn-secondary bg-gray-300 hover:bg-gray-400 text-gray-800"><i class="fas fa-eraser"></i>Clear All</button>
+            </div>
+        </form>
+
+        <hr class="my-8 border-t border-gray-200">
+
+        <div id="actionsContainer" class="space-y-4">
+            <h2 class="text-xl font-semibold text-center text-gray-700 mb-6">Manage Saved Styles</h2>
+            <div id="mainActionButtons" class="manage-actions-grid">
+                <div id="importStylesBtn" class="action-card">
+                    <i class="fas fa-file-excel"></i>
+                    <p>Import Styles</p>
+                </div>
+                <div id="generateReportBtn" class="action-card">
+                    <i class="fas fa-file-alt"></i>
+                    <p>Generate Report</p>
+                </div>
+                <div id="deleteStylesBtn" class="action-card danger">
+                    <i class="fas fa-trash-alt"></i>
+                    <p>Delete Styles</p>
+                </div>
+            </div>
+            <input type="file" id="importFile" class="hidden" accept=".xlsx, .xls">
+            <div id="selectionModeButtons" class="hidden flex justify-center items-center flex-wrap gap-4"></div>
+        </div>
+
+        <div id="allResultsContainer" class="mt-8 space-y-4"></div>
+    </div>
+
+    <!-- Modals -->
+    <div id="racetrackModal" class="modal-overlay hidden racetrack-modal">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold mb-6 text-center">Production Flow Speed</h3>
+            <div class="space-y-6">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-semibold">Cutting</span>
+                        <span id="cuttingTime" class="text-sm font-mono"></span>
+                    </div>
+                    <div class="racetrack">
+                        <div id="cuttingProgress" class="racetrack-progress"></div>
+                        <div id="cuttingCursor" class="racetrack-cursor"><i class="fas fa-cut"></i></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-semibold">Stitching</span>
+                        <span id="stitchingTime" class="text-sm font-mono"></span>
+                    </div>
+                    <div class="racetrack">
+                        <div id="stitchingProgress" class="racetrack-progress"></div>
+                        <div id="stitchingCursor" class="racetrack-cursor"><i class="fas fa-tshirt"></i></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-semibold">Finishing</span>
+                        <span id="finishingTime" class="text-sm font-mono"></span>
+                    </div>
+                    <div class="racetrack">
+                        <div id="finishingProgress" class="racetrack-progress"></div>
+                        <div id="finishingCursor" class="racetrack-cursor"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                </div>
+            </div>
+             <div class="flex justify-center mt-8">
+                <button class="btn btn-secondary" id="closeRaceModalBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="calculationDetailsModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div id="calculationDetailsContent"></div>
+            <div class="flex gap-3 mt-6 justify-end">
+                <button id="downloadCalcPdfBtn" class="btn btn-primary"><i class="fas fa-file-pdf"></i> Download PDF</button>
+                <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').classList.add('hidden')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="duplicateStyleModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">Duplicate Style</h3>
+            <p id="modalMessage" class="mb-6"></p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button type="button" id="modalAddAnother" class="btn btn-primary w-full">Add as Serial #<span id="nextSerialNum"></span></button>
+                <button type="button" id="modalNavigate" class="btn btn-secondary w-full">Go to Existing</button>
+                <button type="button" class="btn btn-danger w-full" onclick="this.closest('.modal-overlay').classList.add('hidden')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal" class="modal-overlay hidden">
+        <div class="modal-content text-center">
+            <h3 class="text-xl font-bold mb-4 text-red-600">Secure Delete</h3>
+            <p id="deleteConfirmMessage" class="mb-4"></p>
+            <label for="deletePassword" class="font-medium">Enter password to confirm:</label>
+            <input type="password" id="deletePassword" class="modal-input" placeholder="Password: DELETE">
+            <p id="deleteError" class="modal-error"></p>
+            <div class="flex gap-3 mt-6">
+                <button type="button" id="confirmDeleteBtn" class="btn btn-danger w-full">Confirm Delete</button>
+                <button type="button" class="btn btn-secondary w-full" onclick="this.closest('.modal-overlay').classList.add('hidden')">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="reportPreviewModal" class="modal-overlay hidden">
+        <div class="modal-content report-modal-content">
+            <div id="reportPreviewContent"></div>
+            <div class="flex gap-3 mt-6 justify-end">
+                <button id="downloadReportBtn" class="btn btn-primary"><i class="fas fa-download"></i>Download Excel</button>
+                <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').classList.add('hidden')">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const EFFICIENCY_SLABS = [
+            [0, 199, 0.20], [200, 299, 0.25], [300, 999, 0.30],
+            [1000, 1999, 0.35], [2000, 2999, 0.40], [3000, 3999, 0.45],
+            [4000, 4999, 0.50], [5000, Infinity, 0.55]
+        ];
+        const DELETE_PASSWORD = "DELETE";
+        let allCalculations = {};
+        let globalSerialCounter = 0;
+        let raceInterval = null;
+
+        const costForm = document.getElementById('costForm');
+        const allResultsContainer = document.getElementById('allResultsContainer');
+        const importStylesBtn = document.getElementById('importStylesBtn');
+        const importFileInput = document.getElementById('importFile');
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        const deleteStylesBtn = document.getElementById('deleteStylesBtn');
+        
+        function calculate(style, order_qty, sam_stitch, sam_cut, sam_fin, processes) {
+            const slabInfo = EFFICIENCY_SLABS.find(([lo, hi]) => order_qty >= lo && order_qty <= hi) || [5000, Infinity, 0.55];
+            const slabLabel = (slabInfo[1] === Infinity) ? `${slabInfo[0]}+` : `${slabInfo[0]}-${slabInfo[1]}`;
+            const eff = slabInfo[2];
+            
+            const safeEff = eff > 0 ? eff : 0;
+            const plan_sam = order_qty * sam_stitch;
+            const stitch_rate = safeEff > 0 ? (sam_stitch * 1.2) / safeEff : Infinity;
+            const stitch_budget = stitch_rate * order_qty;
+            const cut_rate = safeEff > 0 ? sam_cut / safeEff : Infinity;
+            const cut_budget = cut_rate * order_qty;
+            const finish_rate = safeEff > 0 ? sam_fin / safeEff : Infinity;
+            const finish_budget = finish_rate * order_qty;
+            const overhead_p1 = order_qty * sam_stitch * 1.5;
+            const overhead_p2 = order_qty * sam_stitch * 1.0;
+            const total_budget = stitch_budget + cut_budget + finish_budget + overhead_p1 + overhead_p2;
+            const cpm = (plan_sam > 0) ? total_budget / plan_sam : Infinity;
+            const per_piece_cost = (order_qty > 0) ? total_budget / order_qty : Infinity;
+
+            return {
+                "Style No.": style, "Order Qty": order_qty, "Process": processes || 'N/A',
+                "Efficiency Slab": slabLabel, "Efficiency %": eff * 100,
+                "Stitching SAM": sam_stitch, "Plan SAM": plan_sam, "Stitching Rate": stitch_rate, "Stitching Budget": stitch_budget,
+                "Cutting SAM": sam_cut, "Cutting Rate": cut_rate, "Cutting Budget": cut_budget,
+                "Finishing SAM": sam_fin, "Finishing Rate": finish_rate, "Finishing Budget": finish_budget,
+                "Overhead Part-1": overhead_p1, "Overhead Part-2": overhead_p2,
+                "Total Budget": total_budget, "CPM": cpm, "Per-Piece Cost": per_piece_cost
+            };
+        }
+
+        function formatNumber(value, decimals = 2, prefix = '', suffix = '') {
+            if (value === Infinity || value === -Infinity || isNaN(value)) {
+                return `<span class="text-red-500 font-bold">N/A</span>`;
+            }
+            return prefix + value.toLocaleString('en-IN', {
+                minimumFractionDigits: decimals, maximumFractionDigits: decimals
+            }) + suffix;
+        }
+
+        function renderResultCard(result) {
+            const cardId = `result-${result.globalSerialNo}`;
+            const cardHtml = `
+                <div id="${cardId}" class="result-card overflow-hidden" data-global-serial="${result.globalSerialNo}">
+                    <div class="result-card-header">
+                        <div class="flex items-center gap-4 flex-grow">
+                           <div class="checkbox-container">
+                                <input type="checkbox" class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" data-global-serial="${result.globalSerialNo}">
+                            </div>
+                            <span class="font-bold">${result.globalSerialNo}. ${result['Style No.']}-${String(result.serialNo).padStart(3, '0')}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full whitespace-nowrap">Cost: ${formatNumber(result['Per-Piece Cost'], 2, '₹')}</span>
+                            <button data-action="show-race" class="text-gray-500 hover:text-blue-600 p-1 rounded-full hover:bg-blue-100 transition-colors" title="Show Production Flow">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </button>
+                             <button data-action="show-details" class="text-gray-500 hover:text-blue-600 p-1 rounded-full hover:bg-blue-100 transition-colors" title="Show Calculation Details">
+                                <i class="fas fa-calculator"></i>
+                            </button>
+                            <svg class="toggle-icon w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                    <div class="result-card-content bg-white">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                            <div class="bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Order Quantity:</span><span class="block font-bold text-lg">${formatNumber(result['Order Qty'], 0, '', ' Pcs')}</span></div>
+                            <div class="bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Process:</span><span class="block font-bold text-lg">${result['Process']}</span></div>
+                            <div class="bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">Efficiency:</span><span class="block font-bold text-lg">${result['Efficiency Slab']} (${formatNumber(result['Efficiency %'], 0, '', '%')})</span></div>
+                            <div class="bg-gray-50 p-3 rounded-lg"><span class="font-medium text-gray-600">CPM:</span><span class="block font-bold text-lg">${formatNumber(result['CPM'], 6)}</span></div>
+                        </div>
+                        <div class="details-grid">
+                            <div class="detail-section">
+                                <h4>Stitching</h4>
+                                <div class="detail-item"><span>Stitching SAM:</span> <span>${formatNumber(result['Stitching SAM'], 2, '', ' Min')}</span></div>
+                                <div class="detail-item"><span>Plan SAM:</span> <span>${formatNumber(result['Plan SAM'], 2, '', ' Min')}</span></div>
+                                <div class="detail-item"><span>Rate / piece:</span> <span>${formatNumber(result['Stitching Rate'], 2, '₹')}</span></div>
+                                <div class="detail-item font-bold border-t mt-1 pt-1"><span>Budget:</span> <span>${formatNumber(result['Stitching Budget'], 2, '₹')}</span></div>
+                            </div>
+                             <div class="detail-section">
+                                <h4>Cutting</h4>
+                                <div class="detail-item"><span>SAM:</span> <span>${formatNumber(result['Cutting SAM'], 2, '', ' Min')}</span></div>
+                                <div class="detail-item"><span>Rate / piece:</span> <span>${formatNumber(result['Cutting Rate'], 2, '₹')}</span></div>
+                                <div class="detail-item font-bold border-t mt-1 pt-1"><span>Budget:</span> <span>${formatNumber(result['Cutting Budget'], 2, '₹')}</span></div>
+                            </div>
+                             <div class="detail-section">
+                                <h4>Finishing</h4>
+                                <div class="detail-item"><span>SAM:</span> <span>${formatNumber(result['Finishing SAM'], 2, '', ' Min')}</span></div>
+                                <div class="detail-item"><span>Rate / piece:</span> <span>${formatNumber(result['Finishing Rate'], 2, '₹')}</span></div>
+                                <div class="detail-item font-bold border-t mt-1 pt-1"><span>Budget:</span> <span>${formatNumber(result['Finishing Budget'], 2, '₹')}</span></div>
+                            </div>
+                            <div class="detail-section">
+                                <h4>Overheads</h4>
+                                <div class="detail-item"><span>Part-1 (1.5x):</span> <span>${formatNumber(result['Overhead Part-1'], 2, '₹')}</span></div>
+                                <div class="detail-item"><span>Part-2 (1.0x):</span> <span>${formatNumber(result['Overhead Part-2'], 2, '₹')}</span></div>
+                            </div>
+                        </div>
+                        <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 class="font-bold text-lg text-blue-800 mb-2">Totals</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center"><span class="font-medium text-gray-700">Total Budget:</span><span class="font-extrabold text-xl text-blue-900">${formatNumber(result['Total Budget'], 2, '₹')}</span></div>
+                                <div class="flex justify-between items-center"><span class="font-medium text-gray-700">Per-Piece Cost:</span><span class="font-extrabold text-xl text-blue-900">${formatNumber(result['Per-Piece Cost'], 2, '₹')}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            allResultsContainer.insertAdjacentHTML('afterbegin', cardHtml);
+        }
+
+        function reRenderAllResults() {
+            allResultsContainer.innerHTML = '';
+            const allFlatResults = Object.values(allCalculations).flat().sort((a, b) => b.globalSerialNo - a.globalSerialNo);
+            allFlatResults.forEach(renderResultCard);
+            updateActionButtonsState();
+        }
+        
+        function showMessage(text, type = 'success') {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.textContent = text;
+            messagesDiv.className = `alert ${type === 'success' ? 'alert-success' : 'alert-danger'}`;
+            messagesDiv.classList.remove('hidden');
+            setTimeout(() => messagesDiv.classList.add('hidden'), 5000);
+        }
+
+        function processCalculation(style, order_qty, sam_stitch, sam_cut, sam_fin, processes, serialNo) {
+            const results = calculate(style, order_qty, sam_stitch, sam_cut, sam_fin, processes);
+            results.serialNo = serialNo;
+            results.globalSerialNo = ++globalSerialCounter;
+
+            if (!allCalculations[style]) {
+                allCalculations[style] = [];
+            }
+            allCalculations[style].push(results);
+
+            reRenderAllResults();
+            saveState();
+            costForm.reset();
+            costForm.querySelectorAll('input, select').forEach(el => el.dispatchEvent(new Event('input')));
+            showMessage(`Style ${style}-${String(serialNo).padStart(3, '0')} calculated and saved.`);
+        }
+        
+        function updateActionButtonsState() {
+            const hasEntries = Object.keys(allCalculations).length > 0;
+            generateReportBtn.classList.toggle('disabled', !hasEntries);
+            deleteStylesBtn.classList.toggle('disabled', !hasEntries);
+        }
+
+        function saveState() {
+            localStorage.setItem('allCalcsB5', JSON.stringify(allCalculations));
+            localStorage.setItem('globalSerialCounterB5', globalSerialCounter.toString());
+        }
+
+        function loadState() {
+            const savedCalcs = localStorage.getItem('allCalcsB5');
+            const savedCounter = localStorage.getItem('globalSerialCounterB5');
+            if (savedCalcs) {
+                allCalculations = JSON.parse(savedCalcs);
+                globalSerialCounter = savedCounter ? parseInt(savedCounter) : 0;
+                if(Object.keys(allCalculations).length === 0) {
+                    globalSerialCounter = 0;
+                } else {
+                    const maxSerial = Math.max(0, ...Object.values(allCalculations).flat().map(r => r.globalSerialNo || 0));
+                    globalSerialCounter = Math.max(globalSerialCounter, maxSerial);
+                }
+                reRenderAllResults();
+            }
+        }
+        
+        costForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const style = document.getElementById('style_no').value.trim();
+            const order_qty = parseInt(document.getElementById('order_qty').value);
+            const sam_stitching = parseFloat(document.getElementById('sam_stitching').value);
+            const sam_cutting = parseFloat(document.getElementById('sam_cutting').value);
+            const sam_finishing = parseFloat(document.getElementById('sam_finishing').value);
+            const processes = document.getElementById('process_selected_values').value;
+            
+            if (!style || isNaN(order_qty) || isNaN(sam_stitching) || isNaN(sam_cutting) || isNaN(sam_finishing)) {
+                showMessage('Please fill all fields with valid numbers.', 'danger');
+                return;
+            }
+            
+            if (allCalculations[style]) {
+                const nextSerial = allCalculations[style].length + 1;
+                const dupModal = document.getElementById('duplicateStyleModal');
+                dupModal.querySelector('#modalMessage').textContent = `Style "${style}" already exists.`;
+                dupModal.querySelector('#nextSerialNum').textContent = nextSerial;
+                dupModal.classList.remove('hidden');
+                dupModal.dataset.formData = JSON.stringify({ style, order_qty, sam_stitching, sam_cutting, sam_finishing, processes, serialNo: nextSerial });
+            } else {
+                processCalculation(style, order_qty, sam_stitching, sam_cutting, sam_finishing, processes, 1);
+            }
+        });
+
+        document.getElementById('clearInputBtn').addEventListener('click', () => {
+             costForm.reset();
+             costForm.querySelectorAll('.clear-input-btn').forEach(btn => btn.classList.add('hidden'));
+        });
+
+        document.querySelectorAll('.form-input-container').forEach(container => {
+            const input = container.querySelector('input');
+            const clearBtn = container.querySelector('.clear-input-btn');
+            if(input && clearBtn) {
+                input.addEventListener('input', () => {
+                    clearBtn.classList.toggle('hidden', !input.value);
+                });
+                clearBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    input.value = '';
+                    input.dispatchEvent(new Event('input'));
+                    input.focus();
+                });
+            }
+        });
+
+        document.getElementById('modalAddAnother').addEventListener('click', () => {
+            const modal = document.getElementById('duplicateStyleModal');
+            const data = JSON.parse(modal.dataset.formData);
+            processCalculation(data.style, data.order_qty, data.sam_stitching, data.sam_cutting, data.sam_finishing, data.processes, data.serialNo);
+            modal.classList.add('hidden');
+        });
+
+        document.getElementById('modalNavigate').addEventListener('click', () => {
+            const modal = document.getElementById('duplicateStyleModal');
+            const data = JSON.parse(modal.dataset.formData);
+            const firstResultForStyle = allCalculations[data.style][0];
+            const targetElement = document.getElementById(`result-${firstResultForStyle.globalSerialNo}`);
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const content = targetElement.querySelector('.result-card-content');
+                if (!content.classList.contains('active')) {
+                    targetElement.querySelector('.result-card-header').click();
+                }
+            }
+            modal.classList.add('hidden');
+        });
+
+        allResultsContainer.addEventListener('click', (e) => {
+            const header = e.target.closest('.result-card-header');
+            const detailsButton = e.target.closest('button[data-action="show-details"]');
+            const raceButton = e.target.closest('button[data-action="show-race"]');
+
+            if (detailsButton) {
+                e.stopPropagation();
+                const card = e.target.closest('.result-card');
+                const globalSerial = parseInt(card.dataset.globalSerial);
+                const result = Object.values(allCalculations).flat().find(r => r.globalSerialNo === globalSerial);
+                if (result) showCalculationBreakdown(result);
+                return;
+            }
+            
+            if (raceButton) {
+                e.stopPropagation();
+                const card = e.target.closest('.result-card');
+                const globalSerial = parseInt(card.dataset.globalSerial);
+                const result = Object.values(allCalculations).flat().find(r => r.globalSerialNo === globalSerial);
+                if (result) startInfiniteRaceAnimation(result);
+                return;
+            }
+
+            if (header && !e.target.closest('.checkbox-container')) {
+                const content = header.nextElementSibling;
+                const icon = header.querySelector('.toggle-icon');
+                content.classList.toggle('active');
+                icon.classList.toggle('rotated');
+            }
+        });
+
+        function startInfiniteRaceAnimation(result) {
+            const modal = document.getElementById('racetrackModal');
+            modal.classList.remove('hidden');
+
+            const { 'Cutting SAM': sam_cut, 'Stitching SAM': sam_stitch, 'Finishing SAM': sam_fin } = result;
+            const maxSam = Math.max(sam_cut, sam_stitch, sam_fin, 1);
+            const baseLoopDuration = 5; // The longest process takes 5 seconds.
+
+            // Corrected Logic: Duration is proportional to SAM. Higher SAM = longer duration.
+            const durationCut = (sam_cut / maxSam) * baseLoopDuration;
+            const durationStitch = (sam_stitch / maxSam) * baseLoopDuration;
+            const durationFin = (sam_fin / maxSam) * baseLoopDuration;
+
+            const elements = {
+                cutting: { cursor: document.getElementById('cuttingCursor'), progress: document.getElementById('cuttingProgress'), time: document.getElementById('cuttingTime'), sam: sam_cut, duration: durationCut },
+                stitching: { cursor: document.getElementById('stitchingCursor'), progress: document.getElementById('stitchingProgress'), time: document.getElementById('stitchingTime'), sam: sam_stitch, duration: durationStitch },
+                finishing: { cursor: document.getElementById('finishingCursor'), progress: document.getElementById('finishingProgress'), time: document.getElementById('finishingTime'), sam: sam_fin, duration: durationFin }
+            };
+
+            function runAnimation() {
+                for (const key in elements) {
+                    const el = elements[key];
+                    el.time.textContent = `${el.sam.toFixed(2)} SAM`;
+                    
+                    // Reset
+                    el.cursor.style.transition = 'none';
+                    el.progress.style.transition = 'none';
+                    el.cursor.style.left = '0%';
+                    el.progress.style.transform = 'translateX(-100%)';
+
+                    // Animate
+                    setTimeout(() => {
+                        el.cursor.style.transition = `left ${el.duration}s linear`;
+                        el.progress.style.transition = `transform ${el.duration}s linear`;
+                        el.cursor.style.left = '100%';
+                        el.progress.style.transform = 'translateX(0%)';
+                    }, 50);
+                }
+            }
+            
+            runAnimation();
+            raceInterval = setInterval(runAnimation, baseLoopDuration * 1000 + 200);
+        }
+
+        document.getElementById('closeRaceModalBtn').addEventListener('click', () => {
+            clearInterval(raceInterval);
+            document.getElementById('racetrackModal').classList.add('hidden');
+        });
+
+        function showCalculationBreakdown(r) {
+            const eff = r['Efficiency %'] / 100;
+            const breakdownHtml = `
+                <h3 class="text-xl font-bold mb-4 text-center">Calculation for ${r['Style No.']}-${String(r.serialNo).padStart(3, '0')}</h3>
+                <h4>Rates per Piece</h4>
+                <p><b>Stitching:</b> (${r['Stitching SAM']} Min × 1.2) / ${eff} Eff = ${formatNumber(r['Stitching Rate'], 4, '₹')}</p>
+                <p><b>Cutting:</b> ${r['Cutting SAM']} Min / ${eff} Eff = ${formatNumber(r['Cutting Rate'], 4, '₹')}</p>
+                <p><b>Finishing:</b> ${r['Finishing SAM']} Min / ${eff} Eff = ${formatNumber(r['Finishing Rate'], 4, '₹')}</p>
+                <h4>Budgets</h4>
+                <p><b>Stitching:</b> ${formatNumber(r['Stitching Rate'], 4, '₹')} × ${r['Order Qty']} Pcs = ${formatNumber(r['Stitching Budget'], 2, '₹')}</p>
+                <p><b>Cutting:</b> ${formatNumber(r['Cutting Rate'], 4, '₹')} × ${r['Order Qty']} Pcs = ${formatNumber(r['Cutting Budget'], 2, '₹')}</p>
+                <p><b>Finishing:</b> ${formatNumber(r['Finishing Rate'], 4, '₹')} × ${r['Order Qty']} Pcs = ${formatNumber(r['Finishing Budget'], 2, '₹')}</p>
+                <h4>Overheads</h4>
+                <p><b>Part-1:</b> ${r['Stitching SAM']} Min × ${r['Order Qty']} Pcs × 1.5 = ${formatNumber(r['Overhead Part-1'], 2, '₹')}</p>
+                <p><b>Part-2:</b> ${r['Stitching SAM']} Min × ${r['Order Qty']} Pcs × 1.0 = ${formatNumber(r['Overhead Part-2'], 2, '₹')}</p>
+                <h4>Final Costs</h4>
+                <p><b>Total Budget:</b> Sum of all budgets = ${formatNumber(r['Total Budget'], 2, '₹')}</p>
+                <p><b>Per-Piece Cost:</b> ${formatNumber(r['Total Budget'], 2, '₹')} / ${r['Order Qty']} Pcs = ${formatNumber(r['Per-Piece Cost'], 2, '₹')}</p>
+                <p><b>CPM:</b> ${formatNumber(r['Total Budget'], 2, '₹')} / ${formatNumber(r['Plan SAM'], 2)} Min = ${formatNumber(r['CPM'], 6)}</p>
+            `;
+            
+            const modal = document.getElementById('calculationDetailsModal');
+            const contentDiv = document.getElementById('calculationDetailsContent');
+            contentDiv.innerHTML = breakdownHtml;
+            modal.classList.remove('hidden');
+
+            document.getElementById('downloadCalcPdfBtn').onclick = () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                html2canvas(contentDiv).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const imgProps= doc.getImageProperties(imgData);
+                    const pdfWidth = doc.internal.pageSize.getWidth() - 20;
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    doc.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
+                    doc.save(`Calculation_Details_${r['Style No.'].replace(/[/\\?%*:|"<>]/g, '-')}.pdf`);
+                });
+            };
+        }
+        
+        importStylesBtn.addEventListener('click', () => importFileInput.click());
+        importFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    const headers = jsonData.shift().map(h => h ? h.trim() : '');
+
+                    const requiredHeaders = ["Style No.", "Order Qty", "Stitching Sam", "Cutting Sam", "Finishing Sam"];
+                    if (!requiredHeaders.every(h => headers.includes(h))) {
+                        throw new Error("Excel file is missing required headers: " + requiredHeaders.join(', '));
+                    }
+
+                    let importedCount = 0, skippedCount = 0;
+                    jsonData.forEach(row => {
+                        const rowData = headers.reduce((obj, key, i) => ({ ...obj, [key]: row[i] }), {});
+                        const style = rowData["Style No."];
+                        const order_qty = parseInt(rowData["Order Qty"]);
+                        const sam_stitching = parseFloat(rowData["Stitching Sam"]);
+                        const sam_cutting = parseFloat(rowData["Cutting Sam"]);
+                        const sam_finishing = parseFloat(rowData["Finishing Sam"]);
+                        const processes = rowData["Process"] || "N/A";
+
+                        if (!style || isNaN(order_qty) || isNaN(sam_stitching) || isNaN(sam_cutting) || isNaN(sam_finishing)) {
+                            skippedCount++; return;
+                        }
+                        const serialNo = allCalculations[style] ? allCalculations[style].length + 1 : 1;
+                        processCalculation(style, order_qty, sam_stitching, sam_cutting, sam_finishing, processes, serialNo);
+                        importedCount++;
+                    });
+                    showMessage(`Imported ${importedCount} styles. Skipped ${skippedCount} invalid rows.`);
+                } catch (error) {
+                    console.error("Import Error:", error);
+                    showMessage(error.message || "Failed to import file. Check format.", "danger");
+                } finally {
+                    importFileInput.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+        
+        deleteStylesBtn.addEventListener('click', () => !deleteStylesBtn.classList.contains('disabled') && enterSelectionMode('delete'));
+        generateReportBtn.addEventListener('click', () => !generateReportBtn.classList.contains('disabled') && enterSelectionMode('report'));
+        
+        function enterSelectionMode(mode) {
+            allResultsContainer.classList.add('selection-mode');
+            document.getElementById('mainActionButtons').classList.add('hidden');
+            const selectionContainer = document.getElementById('selectionModeButtons');
+            selectionContainer.classList.remove('hidden');
+            selectionContainer.innerHTML = `
+                <button id="selectAllBtn" class="btn btn-secondary"><i class="fas fa-check-double"></i>Select All</button>
+                <button id="actionBtn" class="btn ${mode === 'delete' ? 'btn-danger' : 'btn-primary'}" disabled>${mode === 'delete' ? '<i class="fas fa-trash-alt"></i>Delete Selected' : '<i class="fas fa-file-alt"></i>Generate Report'}</button>
+                <button id="cancelSelectionBtn" class="btn btn-secondary"><i class="fas fa-times"></i>Cancel</button>
+            `;
+            
+            document.getElementById('cancelSelectionBtn').addEventListener('click', exitSelectionMode);
+            document.getElementById('selectAllBtn').addEventListener('click', () => {
+                const allChecked = Array.from(allResultsContainer.querySelectorAll('input[type="checkbox"]')).every(cb => cb.checked);
+                allResultsContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = !allChecked);
+                updateActionBtnState();
+            });
+            document.getElementById('actionBtn').addEventListener('click', () => {
+                if (mode === 'delete') handleDeleteSelected();
+                if (mode === 'report') handleReportGeneration();
+            });
+            allResultsContainer.addEventListener('change', updateActionBtnState);
+            updateActionBtnState();
+        }
+
+        function updateActionBtnState() {
+            const anyChecked = getSelectedSerials().length > 0;
+            document.getElementById('actionBtn').disabled = !anyChecked;
+        }
+        
+        function exitSelectionMode() {
+            allResultsContainer.classList.remove('selection-mode');
+            document.getElementById('mainActionButtons').classList.remove('hidden');
+            document.getElementById('selectionModeButtons').classList.add('hidden');
+            reRenderAllResults();
+        }
+        
+        function getSelectedSerials() {
+            return Array.from(allResultsContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.dataset.globalSerial));
+        }
+        
+        function handleDeleteSelected() {
+            const serialsToDelete = getSelectedSerials();
+            const modal = document.getElementById('deleteConfirmModal');
+            modal.querySelector('#deleteConfirmMessage').textContent = `This will permanently delete ${serialsToDelete.length} style(s).`;
+            modal.classList.remove('hidden');
+            
+            document.getElementById('confirmDeleteBtn').onclick = () => {
+                const passwordInput = document.getElementById('deletePassword');
+                if (passwordInput.value === DELETE_PASSWORD) {
+                    for (const styleKey in allCalculations) {
+                        allCalculations[styleKey] = allCalculations[styleKey].filter(
+                            result => !serialsToDelete.includes(result.globalSerialNo)
+                        );
+                        if (allCalculations[styleKey].length === 0) delete allCalculations[styleKey];
+                    }
+                    if (Object.keys(allCalculations).length === 0) {
+                        globalSerialCounter = 0;
+                    }
+                    saveState();
+                    exitSelectionMode();
+                    showMessage('Selected styles deleted.', 'success');
+                    modal.classList.add('hidden');
+                    passwordInput.value = '';
+                    document.getElementById('deleteError').textContent = '';
+                } else {
+                    document.getElementById('deleteError').textContent = 'Incorrect password.';
+                }
+            };
+        }
+        
+        function handleReportGeneration() {
+            const selectedResults = Object.values(allCalculations).flat()
+                .filter(r => getSelectedSerials().includes(r.globalSerialNo))
+                .sort((a,b) => a.globalSerialNo - b.globalSerialNo);
+            showReportPreview(selectedResults);
+        }
+
+        function showReportPreview(results) {
+            const aggregated = aggregateReportData(results);
+            let previewHtml = `<h3 class="text-xl font-bold mb-4 text-center">Report Preview (${results.length} styles)</h3>
+            <h4 class="report-section-title">Aggregated Summary</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                <div class="report-summary-item"><span>Total Order Qty:</span><span class="font-semibold">${formatNumber(aggregated["Total Order Quantity"], 0)}</span></div>
+                <div class="report-summary-item"><span>Avg. Efficiency:</span><span class="font-semibold">${formatNumber(aggregated["Average Efficiency"], 1, '', '%')}</span></div>
+                <div class="report-summary-item"><span>Grand Total Budget:</span><span class="font-semibold">${formatNumber(aggregated["Grand Total Budget"], 2, '₹')}</span></div>
+                <div class="report-summary-item"><span>Avg. Per-Piece Cost:</span><span class="font-semibold">${formatNumber(aggregated["Average Per-Piece Cost"], 2, '₹')}</span></div>
+            </div>
+            <h4 class="report-section-title">Detailed Breakdown</h4>
+            <div class="overflow-x-auto"><table class="w-full text-sm text-left">
+                <thead class="bg-gray-100"><tr>
+                    <th class="p-2">#</th><th class="p-2">Style</th><th class="p-2">Qty</th><th class="p-2">Total Budget</th><th class="p-2">P.P. Cost</th>
+                </tr></thead><tbody>`;
+            results.forEach(r => {
+                previewHtml += `<tr class="border-b">
+                    <td class="p-2">${r.globalSerialNo}</td>
+                    <td class="p-2">${r['Style No.']}-${String(r.serialNo).padStart(3, '0')}</td>
+                    <td class="p-2">${formatNumber(r['Order Qty'], 0)}</td>
+                    <td class="p-2">${formatNumber(r['Total Budget'], 2, '₹')}</td>
+                    <td class="p-2">${formatNumber(r['Per-Piece Cost'], 2, '₹')}</td>
+                </tr>`;
+            });
+            previewHtml += `</tbody></table></div>`;
+
+            const previewModal = document.getElementById('reportPreviewModal');
+            document.getElementById('reportPreviewContent').innerHTML = previewHtml;
+            previewModal.querySelector('#downloadReportBtn').classList.remove('hidden');
+            previewModal.classList.remove('hidden');
+
+            document.getElementById('downloadReportBtn').onclick = () => {
+                generateExcelReport(results);
+                previewModal.classList.add('hidden');
+                exitSelectionMode();
+            };
+        }
+
+        function aggregateReportData(results) {
+            const total = (key) => results.reduce((sum, r) => sum + (isFinite(r[key]) ? r[key] : 0), 0);
+            const count = (key) => results.filter(r => isFinite(r[key])).length || 0;
+            const avg = (key) => total(key) / count(key) || 0;
+            
+            const avgStitchingSAM = avg('Stitching SAM');
+            const avgCuttingSAM = avg('Cutting SAM');
+            const avgFinishingSAM = avg('Finishing SAM');
+
+            return {
+                "Total Order Quantity": total('Order Qty'),
+                "Average Efficiency": avg('Efficiency %'),
+                "Total Stitching SAM": total('Stitching SAM'),
+                "Average Stitching SAM": avgStitchingSAM,
+                "Average Cutting SAM": avgCuttingSAM,
+                "Average Finishing SAM": avgFinishingSAM,
+                "Average Combined SAM": avgStitchingSAM + avgCuttingSAM + avgFinishingSAM,
+                "Total Planned SAM (Stitching)": total('Plan SAM'),
+                "Total Stitching Budget": total('Stitching Budget'),
+                "Total Cutting Budget": total('Cutting Budget'),
+                "Total Finishing Budget": total('Finishing Budget'),
+                "Total Overhead Part-1": total('Overhead Part-1'),
+                "Total Overhead Part-2": total('Overhead Part-2'),
+                "Grand Total Budget": total('Total Budget'),
+                "Average Per-Piece Cost": avg('Per-Piece Cost'),
+            };
+        }
+
+        function generateExcelReport(results) {
+            const wb = XLSX.utils.book_new();
+            
+            // Aggregated Sheet
+            const aggregatedData = aggregateReportData(results);
+            const summaryData = Object.entries(aggregatedData).map(([key, value]) => [key, value]);
+            const wsSummary = XLSX.utils.aoa_to_sheet([["Metric", "Value"], ...summaryData]);
+            wsSummary['!cols'] = [{ wch: 30 }, { wch: 20 }];
+            XLSX.utils.book_append_sheet(wb, wsSummary, "Aggregated Summary");
+
+            // Detailed Sheet
+            const headerRow1 = ["", "", "", "", "", "", "STITCHING", "", "", "", "Cutting", "", "", "Finishing", "", "", "Over Heads", "", "Ttl Cost & CPM", ""];
+            const headerRow2 = [
+                "Global Serial No.", "Style No.", "Process", "Order Qty", "Slab", "Eff%",
+                "Sam", "Plan Sam", "Rate", "Budget", "Sam", "Rate", "Budget", "Sam", "Rate", "Budget",
+                "Part-1", "Part-2", "CPM", "Per Pc Cost"
+            ];
+            const detailedData = results.map(r => [
+                r.globalSerialNo, `${r['Style No.']}-${String(r.serialNo).padStart(3, '0')}`, r['Process'], r['Order Qty'], r['Efficiency Slab'], r['Efficiency %'],
+                r['Stitching SAM'], r['Plan SAM'], r['Stitching Rate'], r['Stitching Budget'],
+                r['Cutting SAM'], r['Cutting Rate'], r['Cutting Budget'],
+                r['Finishing SAM'], r['Finishing Rate'], r['Finishing Budget'],
+                r['Overhead Part-1'], r['Overhead Part-2'], r['CPM'], r['Per-Piece Cost']
+            ].map(cell => (typeof cell === 'number' && !isFinite(cell)) ? 'N/A' : cell));
+            
+            const wsDetailed = XLSX.utils.aoa_to_sheet([["Monthly Budget calculation"], headerRow1, headerRow2, ...detailedData]);
+            wsDetailed['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 19 } }, { s: { r: 1, c: 6 }, e: { r: 1, c: 9 } },
+                { s: { r: 1, c: 10 }, e: { r: 1, c: 12 } }, { s: { r: 1, c: 13 }, e: { r: 1, c: 15 } },
+                { s: { r: 1, c: 16 }, e: { r: 1, c: 17 } }, { s: { r: 1, c: 18 }, e: { r: 1, c: 19 } }
+            ];
+            wsDetailed['!cols'] = headerRow2.map(h => ({wch: h.length + 5}));
+            XLSX.utils.book_append_sheet(wb, wsDetailed, "Detailed Data");
+            
+            XLSX.writeFile(wb, `Garment_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        loadState();
+    });
+    </script>
+</body>
+</html>
